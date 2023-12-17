@@ -22,10 +22,18 @@ class HomePageState extends State<HomePage> {
     Page4Screen()
   ];
 
+  List<AppBar> _appBars = [
+    AppBar(title: Text('Page 1')),
+    AppBar(title: Text('Page 2')),
+    AppBar(title: Text('Page 3')),
+    AppBar(title: Text('Page 4')),
+  ];
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
+      appBar: _appBars[currentIndex],
       body: _widgetOptions.elementAt(currentIndex),
       bottomNavigationBar: _CustomNavBar(
         size: size,
