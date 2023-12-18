@@ -1,4 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class Page1Screen extends StatefulWidget {
   const Page1Screen({super.key});
@@ -8,116 +12,187 @@ class Page1Screen extends StatefulWidget {
 }
 
 class _Page1ScreenState extends State<Page1Screen> {
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  final ratePerKWh = 1500;
+  late double totalEnergyConsumption;
+  late double totalCost;
+  int sensorData = 0;
+  String? showEnergyConsumption;
+  String? showTotalCost;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize notifications
+    const settingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const initializationSettings =
+        InitializationSettings(android: settingsAndroid);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+    _loadTotalConsumption();
+    _loadTotalCost();
+    generateRandomNumber();
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      _showNotification();
+    });
+  }
+
+  Future<void> _showNotification() async {
+    const androidPlatformChannelSpecifics =
+        AndroidNotificationDetails('your channel id', 'your channel name');
+    const platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // Notification ID
+      'Penggunaan listrik mencapai $showEnergyConsumption Watt-hour',
+      'Klik untuk detail.',
+      platformChannelSpecifics,
+    );
+  }
+
+  void generateRandomNumber() {
+    // ignore: unused_local_variable
+    Timer? timer;
+
+    timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (!mounted) {
+        // Check if the widget is still in the widget tree
+        timer.cancel(); // Cancel the timer if the widget is disposed
+        return;
+      }
+
+      final random = Random();
+      int randomNumber = random.nextInt(10) + 1;
+      setState(() {
+        sensorData = randomNumber;
+        _calculateTotalCost();
+        _calculateConsumption();
+      });
+    });
+  }
+
+  _calculateConsumption() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      totalEnergyConsumption += sensorData.toDouble() * 5 / 3600;
+      prefs.setDouble('totalEnergy', totalEnergyConsumption);
+      showEnergyConsumption = totalEnergyConsumption.toStringAsFixed(2);
+    });
+  }
+
+  _loadTotalConsumption() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      totalEnergyConsumption = (prefs.getDouble('totalEnergy') ?? 0);
+    });
+  }
+
+  _calculateTotalCost() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      final cost = sensorData * ratePerKWh;
+      totalCost += cost.toDouble() * 5 / 3600000;
+      prefs.setDouble('totalCost', totalCost);
+      showTotalCost = totalCost.toStringAsFixed(2);
+    });
+  }
+
+  _loadTotalCost() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      totalCost = (prefs.getDouble('totalCost') ?? 0);
+    });
+  }
+
+  //UI
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        children: [
-          const Expanded(
-            flex: 3,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'Rp 23.000,-',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w900, fontSize: 28),
-                    ),
+    return Column(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Rp $showTotalCost,-',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 28),
                   ),
-                  Text('So far this month bill amount'),
-                ],
-              ),
+                ),
+                const Text('So far this month bill amount'),
+              ],
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: Column(
+        ),
+        const Expanded(
+          flex: 1,
+          child: Row(
+            children: <Widget>[
+              SizedBox(
+                width: 180, // Width of the narrow text
+                child: Text(
+                  'Power Used for',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            width: 800,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(34.0),
-                  child: Text('Power Used for',
-                      textAlign: TextAlign.left,
-                      style:
-                          TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+                Container(
+                  width: 150,
+                  height: 75,
+                  decoration: BoxDecoration(
+                    color: Colors.green[300],
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$sensorData Watt',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 200,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.green[300],
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Text(
-                              '90 Watt',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              'Today',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w300),
-                            ),
-                          ],
-                        ),
-                      ),
+                Container(
+                  width: 150,
+                  height: 75,
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$showEnergyConsumption Wh',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
                     ),
-                    Container(
-                      width: 200,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Text(
-                              '100 Wh',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              'This Month',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w300),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
-          Expanded(
-              flex: 1,
-              child: Container(
-                color: Colors.green,
-              ))
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

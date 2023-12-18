@@ -1,4 +1,6 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_energy_monitor_app_01/view/camerapage.dart';
 
 class Equipment {
   final String name;
@@ -36,8 +38,8 @@ class _Page2ScreenState extends State<Page2Screen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TotalPowerCostInfo(equipmentList: equipmentList),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'List of Electronic Equipment',
             style: TextStyle(
               fontSize: 18,
@@ -49,13 +51,11 @@ class _Page2ScreenState extends State<Page2Screen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Handle the action to add electronic devices
-          // You can show a dialog or navigate to another screen for adding devices
-          // For example:
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => AddDeviceScreen()));
-        },
-        child: Icon(Icons.add),
+        onPressed: () async {
+            await availableCameras().then((value) => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => CameraPage(cameras: value))));
+          },
+        child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
@@ -65,7 +65,7 @@ class _Page2ScreenState extends State<Page2Screen> {
 class TotalPowerCostInfo extends StatelessWidget {
   final List<Equipment> equipmentList;
 
-  TotalPowerCostInfo({required this.equipmentList});
+  const TotalPowerCostInfo({super.key, required this.equipmentList});
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +77,7 @@ class TotalPowerCostInfo extends StatelessWidget {
 
     return Container(
       color: Colors.blueAccent,
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -93,7 +93,7 @@ class TotalPowerCostInfo extends StatelessWidget {
   Widget _buildInfoContainer(String title, String value) {
     return Container(
       width: 150,
-      padding: EdgeInsets.all(8),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         color: Colors.white,
@@ -104,15 +104,15 @@ class TotalPowerCostInfo extends StatelessWidget {
           children: [
             Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.blueAccent,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.blueAccent,
                 fontWeight: FontWeight.w600,
               ),
@@ -127,7 +127,7 @@ class TotalPowerCostInfo extends StatelessWidget {
 class EquipmentList extends StatelessWidget {
   final List<Equipment> equipmentList;
 
-  EquipmentList({required this.equipmentList});
+  const EquipmentList({super.key, required this.equipmentList});
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +145,7 @@ class EquipmentList extends StatelessWidget {
 class EquipmentTile extends StatefulWidget {
   final Equipment equipment;
 
-  EquipmentTile({required this.equipment});
+  const EquipmentTile({super.key, required this.equipment});
 
   @override
   State<EquipmentTile> createState() => _EquipmentTileState();
@@ -156,7 +156,7 @@ class _EquipmentTileState extends State<EquipmentTile> {
   Widget build(BuildContext context) {
     return Card(
       elevation: 3,
-      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: ListTile(
         leading: Icon(
           widget.equipment.isOn ? Icons.lightbulb : Icons.lightbulb_outline,
@@ -164,7 +164,7 @@ class _EquipmentTileState extends State<EquipmentTile> {
         ), // You can replace this with a custom icon
         title: Text(
           widget.equipment.name,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
